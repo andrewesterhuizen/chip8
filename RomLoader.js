@@ -1,5 +1,7 @@
 export default class RomLoader {
   async load(url) {
-    return (await fetch(url)).arrayBuffer();
+    const request = await fetch(url);
+    const buffer = await request.arrayBuffer();
+    return new Uint8Array(buffer);
   }
 }

@@ -1,12 +1,11 @@
 // @ts-check
 
-import Assembler from "./assembler.js";
-import RomLoader from "./RomLoader.js";
-import Screen from "./Screen.js";
 import { digits } from "./sprites.js";
 import { getNibbles, nibblesToByte } from "./utils.js";
 
-class CPU {
+const infoEl = document.querySelector("#info");
+
+export default class CPU {
   ram = new Uint8Array(4096);
   stack = new Uint16Array(16);
   registers = new Uint8Array(16);
@@ -27,11 +26,31 @@ class CPU {
   }
 
   load(program) {
-    // console.log({ program });
-    // this.ram = program;
     for (let i = 0; i < program.length; i++) {
       this.ram[0x200 + i] = program[i];
     }
+  }
+
+  renderInfo() {
+    infoEl.innerHTML = "";
+    infoEl.innerHTML += `${this.registers.reduce((p, r, i) => {
+      p += `V${i.toString(16).toUpperCase()}|`;
+      return p;
+    }, "|")}`;
+
+    infoEl.innerHTML += " I  |";
+    infoEl.innerHTML += "PC |";
+    infoEl.innerHTML += "SP|";
+    infoEl.innerHTML += "<br>";
+
+    infoEl.innerHTML += `${this.registers.reduce((p, r, i) => {
+      p += `${r.toString(16).padStart(2, "0")}|`;
+      return p;
+    }, "|")}`;
+
+    infoEl.innerHTML += `${this.iRegister.toString(16).padStart(3, "0")}|`;
+    infoEl.innerHTML += `${this.pc.toString(16).padStart(3, "0")}|`;
+    infoEl.innerHTML += `${this.sp.toString(16).padStart(2, "0")}|`;
   }
 
   start() {
@@ -45,6 +64,7 @@ class CPU {
       //@ts-ignore
       const ins = instruction.toString(16).padStart(4, "0");
       this.execute(instruction);
+      this.renderInfo();
       setTimeout(run, 100);
     };
 
@@ -425,17 +445,3 @@ class CPU {
     }
   }
 }
-
-const main = async () => {
-  const romLoader = new RomLoader();
-  const rom = await romLoader.load("/roms/IBM Logo.ch8");
-  console.log(rom);
-
-  const screen = new Screen();
-
-  const cpu = new CPU(screen);
-  cpu.load(new Uint8Array(rom));
-  cpu.start();
-};
-
-main();
