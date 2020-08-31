@@ -1,45 +1,55 @@
 // @ts-check
 
-// screen = 64 x 32
-
 import Assembler from "./assembler.js";
-
-const getNibbles = (instruction) => {
-  const a = (instruction & 0xf000) >> 12;
-  const b = (instruction & 0x0f00) >> 8;
-  const c = (instruction & 0x00f0) >> 4;
-  const d = instruction & 0x000f;
-  return [a, b, c, d];
-};
-
-const nibblesToByte = (a, b) => {
-  return (a << 4) | b;
-};
+import RomLoader from "./RomLoader.js";
+import Screen from "./Screen.js";
+import { digits } from "./sprites.js";
+import { getNibbles, nibblesToByte } from "./utils.js";
 
 class CPU {
   ram = new Uint8Array(4096);
   stack = new Uint16Array(16);
   registers = new Uint8Array(16);
   iRegister = 0;
-  pc = 200;
+  pc = 0x200; // 512
   sp = 0;
 
   halted = false;
 
-  loadProgram(program) {
+  screen;
+
+  constructor(screen) {
+    this.screen = screen;
+
+    for (let i = 0; i < digits.length; i++) {
+      this.ram[i] = digits[i];
+    }
+  }
+
+  load(program) {
+    // console.log({ program });
+    // this.ram = program;
     for (let i = 0; i < program.length; i++) {
-      this.ram[200 + i] = program[i];
+      this.ram[0x200 + i] = program[i];
     }
   }
 
   start() {
     console.log("cpu starting");
-    while (!this.halted) {
+
+    const run = () => {
+      if (this.halted) return;
       const a = this.ram[this.pc++];
       const b = this.ram[this.pc++];
       const instruction = (a << 8) | b;
+      //@ts-ignore
+      const ins = instruction.toString(16).padStart(4, "0");
       this.execute(instruction);
-    }
+      setTimeout(run, 100);
+    };
+
+    run();
+
     console.log("cpu finished");
   }
 
@@ -48,9 +58,7 @@ class CPU {
     const [a, b, c, d] = getNibbles(instruction);
 
     const ni = () => {
-      throw new Error(
-        `instruction 0x${instruction.toString(16)} has not been implemented`
-      );
+      throw new Error(`instruction 0x${instruction.toString(16)} has not been implemented`);
     };
 
     switch (a) {
@@ -66,7 +74,7 @@ class CPU {
           case 0xe0: {
             // 00E0 - CLS
             // Clear the display.
-            ni();
+            this.screen.clear();
             break;
           }
           case 0xee: {
@@ -84,7 +92,7 @@ class CPU {
         // 1nnn - JP addr
         // Jump to location nnn.
         // The interpreter sets the program counter to nnn.
-        const location = (a << 8) | (b << 4) | c;
+        const location = (b << 8) | (c << 4) | d;
         this.pc = location;
         break;
       }
@@ -250,7 +258,7 @@ class CPU {
         // Annn - LD I, addr
         // Set I = nnn.
         // The value of register I is set to nnn.
-        const nnn = (c << 8) | (b << 4) | c;
+        const nnn = (b << 8) | (c << 4) | d;
         this.iRegister = nnn;
         break;
       }
@@ -278,7 +286,18 @@ class CPU {
         // Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
 
         // The interpreter reads n bytes from memory, starting at the address stored in I. These bytes are then displayed as sprites on screen at coordinates (Vx, Vy). Sprites are XORed onto the existing screen. If this causes any pixels to be erased, VF is set to 1, otherwise it is set to 0. If the sprite is positioned so part of it is outside the coordinates of the display, it wraps around to the opposite side of the screen. See instruction 8xy3 for more information on XOR, and section 2.4, Display, for more information on the Chip-8 screen and sprites.
-        ni();
+        const x = this.registers[b];
+        const y = this.registers[c];
+        const n = d;
+
+        const sprite = new Uint8Array(n);
+
+        for (let i = 0; i < n; i++) {
+          sprite[i] = this.ram[this.iRegister + i];
+        }
+
+        this.screen.drawSprite(x, y, sprite);
+
         break;
       }
 
@@ -382,16 +401,41 @@ class CPU {
       }
     }
   }
+
+  printRAM() {
+    const itemsPerRow = 16;
+    for (let i = 0; i < this.ram.length; i += itemsPerRow) {
+      let items = [];
+      for (let j = 0; j < itemsPerRow; j++) {
+        // @ts-ignore
+        items.push(this.ram[i + j].toString(16).padStart(2, "0"));
+      }
+
+      let groupedItems = [];
+
+      // group items
+      for (let x = 0; x < itemsPerRow; x += 2) {
+        groupedItems.push(`${items[x]}${items[x + 1]}`);
+      }
+
+      console.log(
+        // @ts-ignore
+        `0x${i.toString(16).padStart(3, "0")}: ${groupedItems.join(" ")}`
+      );
+    }
+  }
 }
 
-const program = `
-    RND V1, 0x03
-    HALT
-`;
+const main = async () => {
+  const romLoader = new RomLoader();
+  const rom = await romLoader.load("/roms/IBM Logo.ch8");
+  console.log(rom);
 
-const assembler = new Assembler(program);
-const instructions = assembler.getInstructions();
-const cpu = new CPU();
-cpu.loadProgram(instructions);
-cpu.start();
-console.log(cpu.registers);
+  const screen = new Screen();
+
+  const cpu = new CPU(screen);
+  cpu.load(new Uint8Array(rom));
+  cpu.start();
+};
+
+main();
