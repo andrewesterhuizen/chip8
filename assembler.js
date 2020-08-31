@@ -14,18 +14,26 @@ export default class Assembler {
     const split = line.split(" ");
     const op = split.shift();
 
-    let [a, b] = split.join("").split(",");
-    if (!b) b = 0;
+    console.log(split);
+
+    let [a, b, c] = split.join("").split(",");
 
     switch (op) {
+      case "CLS": {
+        return nibblesToByte4(0, 0, 0xe, 0);
+      }
+
       case "LD": {
+        if (a === "I") {
+          const nnn = b.split("0x")[1];
+          const na = parseInt(nnn[0], 16);
+          const nb = parseInt(nnn[1], 16);
+          const nc = parseInt(nnn[2], 16);
+          const i = nibblesToByte4(0xa, na, nb, nc);
+          return i;
+        }
         const byte = parseInt(b.split("0x")[1], 16);
-        return nibblesToByte4(
-          0x6,
-          parseInt(a[1]),
-          (byte & 0xff00) << 4,
-          byte & 0xff
-        );
+        return nibblesToByte4(0x6, parseInt(a[1]), (byte & 0xff00) << 4, byte & 0xff);
       }
 
       case "ADD": {
@@ -34,12 +42,7 @@ export default class Assembler {
         } else {
           const byte = parseInt(b.split("0x")[1], 16);
 
-          return nibblesToByte4(
-            0x7,
-            parseInt(a[1]),
-            (byte & 0xff00) << 4,
-            byte & 0xff
-          );
+          return nibblesToByte4(0x7, parseInt(a[1]), (byte & 0xff00) << 4, byte & 0xff);
         }
       }
 
@@ -80,12 +83,14 @@ export default class Assembler {
       case "RND": {
         const byte = parseInt(b.split("0x")[1], 16);
 
-        return nibblesToByte4(
-          0xc,
-          parseInt(a[1]),
-          (byte & 0xff00) << 4,
-          byte & 0xff
-        );
+        return nibblesToByte4(0xc, parseInt(a[1]), (byte & 0xff00) << 4, byte & 0xff);
+      }
+
+      //
+      case "DRW": {
+        const byte = parseInt(c.split("0x")[1], 16);
+
+        return nibblesToByte4(0xd, parseInt(a[1]), parseInt(b[2]), byte);
       }
 
       //
@@ -96,8 +101,6 @@ export default class Assembler {
       default:
         throw new Error(`Unknown opcode ${op} found`);
     }
-
-    return 0;
   }
 
   getInstructions() {
