@@ -65,7 +65,7 @@ export default class CPU {
       const ins = instruction.toString(16).padStart(4, "0");
       this.execute(instruction);
       this.renderInfo();
-      setTimeout(run, 100);
+      setTimeout(run, 1);
     };
 
     run();
@@ -101,7 +101,8 @@ export default class CPU {
             // 00EE - RET
             // Return from a subroutine.
             // The interpreter sets the program counter to the address at the top of the stack, then subtracts 1 from the stack pointer.
-            ni();
+            this.pc = this.stack[this.sp];
+            this.sp--;
           }
         }
 
@@ -121,7 +122,9 @@ export default class CPU {
         // 2nnn - CALL addr
         // Call subroutine at nnn.
         // The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn.
-        ni();
+        this.sp++;
+        this.stack[this.sp] = this.pc;
+        this.pc = (b << 8) | (c << 4) | d;
         break;
       }
 
@@ -381,7 +384,7 @@ export default class CPU {
             // Fx1E - ADD I, Vx
             // Set I = I + Vx.
             // The values of I and Vx are added, and the results are stored in I.
-            ni();
+            this.iRegister += this.registers[b];
             break;
           }
           case 0x29: {
@@ -395,6 +398,12 @@ export default class CPU {
             // Fx33 - LD B, Vx
             // Store BCD representation of Vx in memory locations I, I+1, and I+2.
             // The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.
+
+            // FX33: Binary-coded decimal conversionPermalink
+            // This instruction is a little involved. It takes the number in VX (which is one byte, so it can be any number from 0 to 255) and converts it to three decimal digits, storing these digits in memory at the address in the index register I. For example, if VX contains 156 (or 9C in hexadecimal), it would put the number 1 at the address in I, 5 in address I + 1, and 6 in address I + 2.
+            //
+            // Many people seem to struggle with this instruction. You’re lucky; the early CHIP-8 interpreters couldn’t divide by 10 or easily calculate a number modulo 10, but you can probably do both in your programming language. Do it to extract the necessary digits.
+
             ni();
             break;
           }
@@ -402,14 +411,18 @@ export default class CPU {
             // Fx55 - LD [I], Vx
             // Store registers V0 through Vx in memory starting at location I.
             // The interpreter copies the values of registers V0 through Vx into memory, starting at the address in I.
-            ni();
+            for (let i = 0; i < b; i++) {
+              this.ram[this.iRegister + i] = this.registers[i];
+            }
             break;
           }
           case 0x65: {
             // Fx65 - LD Vx, [I]
             // Read registers V0 through Vx from memory starting at location I.
             // The interpreter reads values from memory starting at location I into registers V0 through Vx.
-            ni();
+            for (let i = 0; i < b; i++) {
+              this.registers[i] = this.ram[this.iRegister + i];
+            }
             break;
           }
         }

@@ -9,24 +9,23 @@ const main = async () => {
   const romLoader = new RomLoader();
   const rom = await romLoader.load("/roms/IBM Logo.ch8");
 
-  const source = `
-          CLS
-          LD I, 0xfff
-          LD V0, 0x1
-          LD V1, 0x1
-          DRW V0, V1, 0x1
+  //   const source = `
+  // start:
+  //     ADD V0, 0x2
+  //     LD I, 0x0
+  //     DRW V0, V1, 0x5
+  //     JP start
+  //     `;
 
-          HALT
-    `;
+  //   const assembler = new Assembler(source);
+  //   const instructions = assembler.getInstructions();
 
-  const assembler = new Assembler(source);
-  const instructions = assembler.getInstructions();
-
-  console.log(instructions);
+  //   console.log(instructions);
 
   const screen = new Screen();
   const cpu = new CPU(screen);
-  cpu.load(instructions);
+  cpu.load(rom);
+  cpu.printRAM();
   cpu.start();
 };
 
