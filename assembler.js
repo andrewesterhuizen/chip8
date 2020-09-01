@@ -10,6 +10,8 @@ export default class Assembler {
     this.program = program;
   }
 
+  labels = {};
+
   parseLine(line) {
     const split = line.split(" ");
     const op = split.shift();
@@ -25,12 +27,21 @@ export default class Assembler {
 
       case "LD": {
         if (a === "I") {
-          const nnn = b.split("0x")[1];
-          const na = parseInt(nnn[0], 16);
-          const nb = parseInt(nnn[1], 16);
-          const nc = parseInt(nnn[2], 16);
-          const i = nibblesToByte4(0xa, na, nb, nc);
-          return i;
+          if (b.startsWith("0x")) {
+            const nnn = b.split("0x")[1];
+            const na = parseInt(nnn[0], 16);
+            const nb = parseInt(nnn[1], 16);
+            const nc = parseInt(nnn[2], 16);
+            const i = nibblesToByte4(0xa, na, nb, nc);
+            return i;
+          } else {
+            const address = this.labels[b];
+            if (typeof address === "undefined") {
+              throw new Error(`label ${b} could not be found`);
+            }
+            const addressHex = address.toString(16).padStart("3", 0);
+            return nibblesToByte4(0xa, addressHex[0], addressHex[1], addressHex[2]);
+          }
         }
         const byte = parseInt(b.split("0x")[1], 16);
         return nibblesToByte4(0x6, parseInt(a[1]), (byte & 0xff00) << 4, byte & 0xff);
@@ -44,6 +55,16 @@ export default class Assembler {
 
           return nibblesToByte4(0x7, parseInt(a[1]), (byte & 0xff00) << 4, byte & 0xff);
         }
+      }
+
+      case "JP": {
+        // TODO: there is another version of JP
+        const address = this.labels[a];
+        if (typeof address === "undefined") {
+          throw new Error(`label ${a} could not be found`);
+        }
+        const addressHex = address.toString(16).padStart("3", 0);
+        return nibblesToByte4(0x1, addressHex[0], addressHex[1], addressHex[2]);
       }
 
       // 0x8
@@ -93,6 +114,10 @@ export default class Assembler {
         return nibblesToByte4(0xd, parseInt(a[1]), parseInt(b[2]), byte);
       }
 
+      case "DB": {
+        return parseInt(a.split("0x")[1], 16);
+      }
+
       //
       case "HALT": {
         return 0x00ff;
@@ -103,24 +128,58 @@ export default class Assembler {
     }
   }
 
+  getLabels() {
+    const lines = this.program.split("\n");
+
+    let instructionNumber = 0x200;
+
+    lines.forEach((line) => {
+      line = line.split(";")[0];
+      line = line.trim();
+      if (line == "") return;
+
+      if (line.endsWith(":")) {
+        const label = line.split(":")[0];
+        this.labels[label] = instructionNumber;
+      } else {
+        instructionNumber++;
+      }
+    });
+
+    console.log("labels:", this.labels);
+  }
+
   getInstructions() {
+    this.getLabels();
     console.log("* assembler starting");
     const instructions = [];
     const lines = this.program.split("\n");
 
+    let instructionNumber = 0x200;
+
     lines.forEach((line) => {
+      line = line.split(";")[0];
       line = line.trim();
       if (line == "") return;
-      const ins = this.parseLine(line);
-      // @ts-ignore
-      console.log(line.padEnd(12), " => ", `0x${ins.toString(16)}`);
-      const high = (ins & 0xff00) >> 8;
-      const low = ins & 0xff;
 
-      //   console.log(high.toString(16), low.toString(16));
+      // label
+      if (line.endsWith(":")) {
+        // const label = line.split(":")[0];
+        // this.labels[label] = instructionNumber;
+      } else {
+        const ins = this.parseLine(line);
+        // @ts-ignore
+        console.log(line.padEnd(12), " => ", `0x${ins.toString(16)}`);
+        const high = (ins & 0xff00) >> 8;
+        const low = ins & 0xff;
 
-      instructions.push(high);
-      instructions.push(low);
+        //   console.log(high.toString(16), low.toString(16));
+
+        instructions.push(high);
+        instructions.push(low);
+
+        instructionNumber++;
+      }
     });
 
     console.log("* assembler finished");
