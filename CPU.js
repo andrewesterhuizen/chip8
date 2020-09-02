@@ -13,16 +13,48 @@ export default class CPU {
   pc = 0x200; // 512
   sp = 0;
 
+  delayTimer = 0;
+
+  soundTimer = 0;
+  soundPlaying = false;
+  sound;
+
   halted = false;
 
   screen;
 
-  constructor(screen) {
+  keyboard;
+
+  constructor(screen, keyboard, sound) {
     this.screen = screen;
+    this.keyboard = keyboard;
+    this.sound = sound;
 
     for (let i = 0; i < digits.length; i++) {
       this.ram[i] = digits[i];
     }
+
+    setInterval(() => {
+      if (this.delayTimer > 0) {
+        this.delayTimer--;
+      }
+    }, 1 / 60);
+
+    setInterval(() => {
+      if (this.soundTimer > 0) {
+        this.soundTimer--;
+
+        if (!this.soundPlaying) {
+          this.soundPlaying = true;
+          this.sound.start();
+        }
+      } else {
+        if (this.soundPlaying) {
+          this.soundPlaying = false;
+          this.sound.stop();
+        }
+      }
+    }, 1 / 60);
   }
 
   load(program) {
@@ -41,6 +73,8 @@ export default class CPU {
     infoEl.innerHTML += " I  |";
     infoEl.innerHTML += "PC |";
     infoEl.innerHTML += "SP|";
+    infoEl.innerHTML += "DT|";
+    infoEl.innerHTML += "ST|";
     infoEl.innerHTML += "<br>";
 
     infoEl.innerHTML += `${this.registers.reduce((p, r, i) => {
@@ -51,6 +85,12 @@ export default class CPU {
     infoEl.innerHTML += `${this.iRegister.toString(16).padStart(3, "0")}|`;
     infoEl.innerHTML += `${this.pc.toString(16).padStart(3, "0")}|`;
     infoEl.innerHTML += `${this.sp.toString(16).padStart(2, "0")}|`;
+    infoEl.innerHTML += `${this.delayTimer.toString(16).padStart(2, "0")}|`;
+    infoEl.innerHTML += `${this.soundTimer.toString(16).padStart(2, "0")}|`;
+
+    infoEl.innerHTML += "<br>";
+
+    infoEl.innerHTML += "key: " + this.keyboard.keyPressed;
   }
 
   start() {
@@ -63,7 +103,9 @@ export default class CPU {
       const instruction = (a << 8) | b;
       //@ts-ignore
       const ins = instruction.toString(16).padStart(4, "0");
+
       this.execute(instruction);
+
       this.renderInfo();
       setTimeout(run, 1);
     };
@@ -331,7 +373,13 @@ export default class CPU {
             // Ex9E - SKP Vx
             // Skip next instruction if key with the value of Vx is pressed.
             // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
-            ni();
+            const vx = this.registers[b];
+            if (this.keyboard && this.keyboard.keyPressed) {
+              const n = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
+              if (vx === n) {
+                this.pc += 2;
+              }
+            }
             break;
           }
 
@@ -339,7 +387,15 @@ export default class CPU {
             // ExA1 - SKNP Vx
             // Skip next instruction if key with the value of Vx is not pressed.
             // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
-            ni();
+
+            const vx = this.registers[b];
+            if (this.keyboard && this.keyboard.keyPressed) {
+              const n = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
+              if (vx !== n) {
+                this.pc += 2;
+              }
+            }
+
             break;
           }
         }
@@ -354,7 +410,7 @@ export default class CPU {
             // Fx07 - LD Vx, DT
             // Set Vx = delay timer value.
             // The value of DT is placed into Vx.
-            ni();
+            this.registers[b] = this.delayTimer;
             break;
           }
 
@@ -362,7 +418,12 @@ export default class CPU {
             // Fx0A - LD Vx, K
             // Wait for a key press, store the value of the key in Vx.
             // All execution stops until a key is pressed, then the value of that key is stored in Vx.
-            ni();
+            if (!this.keyboard.keyPressed) {
+              this.pc += 2;
+            } else {
+              this.registers[b] = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
+            }
+
             break;
           }
 
@@ -370,14 +431,14 @@ export default class CPU {
             // Fx15 - LD DT, Vx
             // Set delay timer = Vx.
             // DT is set equal to the value of Vx.
-            ni();
+            this.delayTimer = this.registers[b];
             break;
           }
           case 0x18: {
             // Fx18 - LD ST, Vx
             // Set sound timer = Vx.
             // ST is set equal to the value of Vx.
-            ni();
+            this.soundTimer = this.registers[b];
             break;
           }
           case 0x1e: {
@@ -391,7 +452,7 @@ export default class CPU {
             // Fx29 - LD F, Vx
             // Set I = location of sprite for digit Vx.
             // The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
-            ni();
+            this.iRegister = b * 5;
             break;
           }
           case 0x33: {
@@ -403,8 +464,14 @@ export default class CPU {
             // This instruction is a little involved. It takes the number in VX (which is one byte, so it can be any number from 0 to 255) and converts it to three decimal digits, storing these digits in memory at the address in the index register I. For example, if VX contains 156 (or 9C in hexadecimal), it would put the number 1 at the address in I, 5 in address I + 1, and 6 in address I + 2.
             //
             // Many people seem to struggle with this instruction. You’re lucky; the early CHIP-8 interpreters couldn’t divide by 10 or easily calculate a number modulo 10, but you can probably do both in your programming language. Do it to extract the necessary digits.
+            const vx = this.registers[b];
+            const first = vx % 10;
+            const second = (vx % 100) - first;
+            const third = (vx % 1000) - first - second;
 
-            ni();
+            this.ram[this.iRegister] = third / 100;
+            this.ram[this.iRegister + 1] = second / 10;
+            this.ram[this.iRegister + 2] = first;
             break;
           }
           case 0x55: {

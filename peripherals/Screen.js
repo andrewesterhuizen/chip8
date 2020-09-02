@@ -29,6 +29,7 @@ export default class Screen {
   }
 
   clear() {
+    console.log("Screen: clear");
     this.context.fillStyle = "black";
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
@@ -43,6 +44,7 @@ export default class Screen {
   }
 
   drawSprite(dx, dy, sprite) {
+    console.log("Screen: drawSprite", dx, dy, sprite);
     for (let y = 0; y < sprite.length; y++) {
       const row = sprite[y];
       for (let x = 0; x < 8; x++) {

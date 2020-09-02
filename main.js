@@ -2,8 +2,10 @@
 
 import Assembler from "./Assembler.js";
 import RomLoader from "./RomLoader.js";
-import Screen from "./Screen.js";
+import Screen from "./peripherals/Screen.js";
 import CPU from "./CPU.js";
+import Sound from "./peripherals/Sound.js";
+import Keyboard from "./peripherals/Keyboard.js";
 
 const main = async () => {
   const romLoader = new RomLoader();
@@ -23,7 +25,9 @@ const main = async () => {
   //   console.log(instructions);
 
   const screen = new Screen();
-  const cpu = new CPU(screen);
+  const keyboard = new Keyboard();
+  const sound = new Sound();
+  const cpu = new CPU(screen, keyboard, sound);
   cpu.load(rom);
   cpu.printRAM();
   cpu.start();
