@@ -42,6 +42,10 @@ export default class Assembler {
             const addressHex = address.toString(16).padStart("3", 0);
             return nibblesToByte4(0xa, addressHex[0], addressHex[1], addressHex[2]);
           }
+        } else if (a === "ST") {
+          return nibblesToByte4(0xf, parseInt(b[1]), 1, 8);
+        } else if (a === "DT") {
+          return nibblesToByte4(0xf, parseInt(b[1]), 1, 5);
         }
         const byte = parseInt(b.split("0x")[1], 16);
         return nibblesToByte4(0x6, parseInt(a[1]), (byte & 0xff00) << 4, byte & 0xff);
