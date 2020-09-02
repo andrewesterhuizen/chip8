@@ -1,11 +1,7 @@
 // @ts-check
 
-import Assembler from "./Assembler.js";
 import RomLoader from "./RomLoader.js";
-import Screen from "./peripherals/Screen.js";
-import CPU from "./CPU.js";
-import Sound from "./peripherals/Sound.js";
-import Keyboard from "./peripherals/Keyboard.js";
+import VM from "../vm/VM.js";
 
 const main = async () => {
   const romLoader = new RomLoader();
@@ -24,13 +20,9 @@ const main = async () => {
 
   //   console.log(instructions);
 
-  const screen = new Screen();
-  const keyboard = new Keyboard();
-  const sound = new Sound();
-  const cpu = new CPU(screen, keyboard, sound);
-  cpu.load(rom);
-  cpu.printRAM();
-  cpu.start();
+  const vm = new VM(true);
+  vm.loadRom(rom);
+  vm.start();
 };
 
 main();
