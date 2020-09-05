@@ -4,7 +4,7 @@ import Assembler from "../lib/Assembler.js";
 
 const main = async () => {
   const romLoader = new RomLoader();
-  const rom = await romLoader.load("/c8games/TETRIS");
+  const rom = await romLoader.load("/c8games/PONG");
 
   const source = `
   LD V3, V0
