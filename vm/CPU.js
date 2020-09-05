@@ -453,7 +453,7 @@ export default class CPU {
             // Fx29 - LD F, Vx
             // Set I = location of sprite for digit Vx.
             // The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
-            this.iRegister = b * 5;
+            this.iRegister = this.registers[b] * 5;
             break;
           }
           case 0x33: {
