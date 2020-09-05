@@ -1,8 +1,8 @@
 // @ts-check
 
 import RomLoader from "./RomLoader.js";
-import VM from "../vm/VM.js";
-// import Assembler from "../build/Assembler.js";
+import VM from "../lib/VM.js";
+import Assembler from "../lib/Assembler.js";
 
 const main = async () => {
   const romLoader = new RomLoader();

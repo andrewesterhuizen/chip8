@@ -4,7 +4,7 @@ export default [
   {
     input: "assembler/Assembler.ts",
     output: {
-      dir: "build",
+      dir: "lib",
       format: "es",
     },
     plugins: [typescript()],
@@ -12,7 +12,7 @@ export default [
   {
     input: "vm/VM.ts",
     output: {
-      dir: "build",
+      dir: "lib",
       format: "es",
     },
     plugins: [typescript()],
