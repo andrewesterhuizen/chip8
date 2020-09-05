@@ -1,5 +1,8 @@
 import { digits } from "./sprites.js";
 import { getNibbles, nibblesToByte } from "./utils.js";
+import Keyboard from "./peripherals/Keyboard.js";
+import Sound from "./peripherals/Sound.js";
+import Screen from "./peripherals/Screen.js";
 
 const infoEl = document.querySelector("#info");
 
@@ -15,13 +18,11 @@ export default class CPU {
 
   soundTimer = 0;
   soundPlaying = false;
-  sound;
+  sound: Sound;
+  screen: Screen;
+  keyboard: Keyboard;
 
-  screen;
-
-  keyboard;
-
-  constructor(screen, keyboard, sound) {
+  constructor(screen: Screen, keyboard: Keyboard, sound: Sound) {
     this.screen = screen;
     this.keyboard = keyboard;
     this.sound = sound;
@@ -86,8 +87,8 @@ export default class CPU {
 
     infoEl.innerHTML += "<br>";
 
-    const keyIndex = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
-    const keyString = keyIndex.toString(16)[0];
+    const keyNumber = this.keyboard.getKeyNumber();
+    const keyString = keyNumber ? keyNumber.toString(16)[0] : "-";
     infoEl.innerHTML += "key: " + keyString + " | " + this.keyboard.keyPressed;
   }
 
@@ -354,8 +355,7 @@ export default class CPU {
             // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
             const vx = this.registers[b];
             if (this.keyboard && this.keyboard.keyPressed) {
-              const n = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
-              if (vx === n) {
+              if (vx === this.keyboard.getKeyNumber()) {
                 this.pc += 2;
               }
             }
@@ -369,8 +369,7 @@ export default class CPU {
 
             const vx = this.registers[b];
             if (this.keyboard && this.keyboard.keyPressed) {
-              const n = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
-              if (vx !== n) {
+              if (vx !== this.keyboard.getKeyNumber()) {
                 this.pc += 2;
               }
             }
@@ -400,7 +399,7 @@ export default class CPU {
             if (!this.keyboard.keyPressed) {
               this.pc += 2;
             } else {
-              this.registers[b] = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
+              this.registers[b] = this.keyboard.getKeyNumber();
             }
 
             break;
