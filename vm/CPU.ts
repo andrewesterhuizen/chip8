@@ -17,8 +17,6 @@ export default class CPU {
   soundPlaying = false;
   sound;
 
-  halted = false;
-
   screen;
 
   keyboard;
@@ -93,46 +91,26 @@ export default class CPU {
     infoEl.innerHTML += "key: " + keyString + " | " + this.keyboard.keyPressed;
   }
 
-  start() {
-    console.log("cpu starting");
+  fetchNextInstruction() {
+    const a = this.ram[this.pc++];
+    const b = this.ram[this.pc++];
+    return (a << 8) | b;
+  }
 
-    const run = () => {
-      if (this.halted) return;
-      const a = this.ram[this.pc++];
-      const b = this.ram[this.pc++];
-      const instruction = (a << 8) | b;
-      //@ts-ignore
-      const ins = instruction.toString(16).padStart(4, "0");
-
-      this.execute(instruction);
-
-      this.renderInfo();
-      setTimeout(run, 1);
-    };
-
-    run();
-
-    console.log("cpu finished");
+  tick() {
+    this.execute(this.fetchNextInstruction());
+    this.renderInfo();
   }
 
   execute(instruction) {
-    console.log(`executing: 0x${instruction.toString(16).padStart(4, "0")}`);
+    // console.log(`executing: 0x${instruction.toString(16).padStart(4, "0")}`);
     const [a, b, c, d] = getNibbles(instruction);
-
-    const ni = () => {
-      throw new Error(`instruction 0x${instruction.toString(16)} has not been implemented`);
-    };
 
     switch (a) {
       case 0x0: {
         const byte = nibblesToByte(c, d);
 
         switch (byte) {
-          case 0xff: {
-            // TEMP
-            this.halted = true;
-            break;
-          }
           case 0xe0: {
             // 00E0 - CLS
             // Clear the display.
@@ -498,7 +476,7 @@ export default class CPU {
       }
 
       default: {
-        ni();
+        throw new Error(`instruction 0x${instruction.toString(16)} has not been implemented`);
       }
     }
   }

@@ -24,11 +24,11 @@ export default class Sound {
   }
 
   start() {
-    console.log("Sound: start");
+    // console.log("Sound: start");
     this.gainNode.gain.value = this.volume;
   }
   stop() {
-    console.log("Sound: stop");
+    // console.log("Sound: stop");
     this.gainNode.gain.value = 0;
   }
 }

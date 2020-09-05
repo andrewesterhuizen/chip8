@@ -1,4 +1,4 @@
-import Screen from "./peripherals/Screen.js";
+import Screen, { newDOMScreen } from "./peripherals/Screen.js";
 import Keyboard from "./peripherals/Keyboard.js";
 import Sound from "./peripherals/Sound.js";
 import CPU from "./CPU.js";
@@ -6,12 +6,14 @@ import CPU from "./CPU.js";
 export default class VM {
   debug = false;
   cpu: CPU;
+  screen: Screen;
+
   constructor(debug: boolean) {
     this.debug = debug;
-    const screen = new Screen();
+    this.screen = newDOMScreen();
     const keyboard = new Keyboard();
     const sound = new Sound();
-    this.cpu = new CPU(screen, keyboard, sound);
+    this.cpu = new CPU(this.screen, keyboard, sound);
   }
 
   loadRom(rom: Uint8Array) {
@@ -21,7 +23,9 @@ export default class VM {
     }
   }
 
-  start() {
-    this.cpu.start();
+  start(clockSpeedMS: number) {
+    setInterval(() => {
+      this.cpu.tick();
+    }, clockSpeedMS);
   }
 }

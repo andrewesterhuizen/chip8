@@ -6,6 +6,7 @@ export default [
     output: {
       dir: "lib",
       format: "es",
+      sourcemap: "inline",
     },
     plugins: [typescript()],
   },
@@ -14,6 +15,7 @@ export default [
     output: {
       dir: "lib",
       format: "es",
+      sourcemap: "inline",
     },
     plugins: [typescript()],
   },
