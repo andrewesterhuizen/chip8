@@ -1,5 +1,3 @@
-// @ts-check
-
 import { digits } from "./sprites.js";
 import { getNibbles, nibblesToByte } from "./utils.js";
 

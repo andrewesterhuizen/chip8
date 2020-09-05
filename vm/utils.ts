@@ -1,4 +1,4 @@
-export const getNibbles = (instruction) => {
+export const getNibbles = (instruction: number) => {
   const a = (instruction & 0xf000) >> 12;
   const b = (instruction & 0x0f00) >> 8;
   const c = (instruction & 0x00f0) >> 4;
@@ -6,6 +6,6 @@ export const getNibbles = (instruction) => {
   return [a, b, c, d];
 };
 
-export const nibblesToByte = (a, b) => {
+export const nibblesToByte = (a: number, b: number) => {
   return (a << 4) | b;
 };
