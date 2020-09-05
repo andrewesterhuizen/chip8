@@ -131,7 +131,6 @@ export default class Assembler {
         }
       }
 
-      // 0x8
       case "OR": {
         return n4(0x8, argA.getRegister(), argB.getRegister(), 0x1);
       }
@@ -143,10 +142,6 @@ export default class Assembler {
       case "XOR": {
         return n4(0x8, argA.getRegister(), argB.getRegister(), 0x3);
       }
-
-      // case "MOV": {
-      //   return n4(0x8, parseInt(a[1]), parseInt(b[1]), 0);
-      // }
 
       case "SUB": {
         return n4(0x8, argA.getRegister(), argB.getRegister(), 0x5);
@@ -168,19 +163,16 @@ export default class Assembler {
         return n4(0x8, argA.getRegister(), argB.getRegister(), 0xe);
       }
 
-      //
       case "RND": {
         const [, b, a] = argB.getNibbles();
         return n4(0xc, argA.getRegister(), b, a);
       }
 
-      //
       case "DRW": {
         const [, , a] = argC.getNibbles();
         return n4(0xd, argA.getRegister(), argB.getRegister(), a);
       }
 
-      //
       case "SKP": {
         return n4(0xe, argA.getRegister(), 0x9, 0xe);
       }
