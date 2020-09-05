@@ -53,7 +53,7 @@ export default class Assembler {
             throw new Error(`label ${argA.rawArg()} could not be found`);
           }
           const addressHex = address.toString(16).padStart(3, "0");
-          return n4(0xa, parseInt(addressHex[0], 16), parseInt(addressHex[1], 16), parseInt(addressHex[2], 16));
+          return n4(0x1, parseInt(addressHex[0], 16), parseInt(addressHex[1], 16), parseInt(addressHex[2], 16));
         }
       }
 
@@ -180,9 +180,12 @@ export default class Assembler {
         return n4(0xe, argA.getRegister(), 0xa, 0x1);
       }
 
-      //
       case "HALT": {
         return 0x00ff;
+      }
+
+      case "DB": {
+        return argA.getNumber() & 0xff;
       }
 
       default:
@@ -204,11 +207,9 @@ export default class Assembler {
         const label = line.split(":")[0];
         this.labels[label] = instructionNumber;
       } else {
-        instructionNumber++;
+        instructionNumber += 2;
       }
     });
-
-    // console.log("labels:", this.labels);
   }
 
   getInstructions(): Uint8Array {
@@ -227,12 +228,14 @@ export default class Assembler {
         const ins = this.parseLine(line);
         // @ts-ignore
         // console.log(line.padEnd(12), " => ", `0x${ins.toString(16)}`);
-        const high = (ins & 0xff00) >> 8;
+
+        // HACK, fix this
+        if (!line.startsWith("DB")) {
+          const high = (ins & 0xff00) >> 8;
+          instructions.push(high);
+        }
+
         const low = ins & 0xff;
-
-        // console.log(high.toString(16), low.toString(16));
-
-        instructions.push(high);
         instructions.push(low);
       }
     });

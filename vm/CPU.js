@@ -156,6 +156,7 @@ export default class CPU {
         // Jump to location nnn.
         // The interpreter sets the program counter to nnn.
         const location = (b << 8) | (c << 4) | d;
+        // debugger;
         this.pc = location;
         break;
       }

@@ -15,18 +15,13 @@ expected 0x${a.toString(16)}, got: 0x${b.toString(16)}`);
 const to2ByteStrings = (ins: Uint8Array) => {
   const strs: string[] = [];
 
-  let tmp: number[] = [];
+  let tmp: string[] = [];
 
   ins.forEach((i) => {
-    tmp.push(i);
+    tmp.push(ths(i, 2));
 
     if (tmp.length === 2) {
-      strs.push(
-        tmp
-          .map((n) => n.toString(16))
-          .join("")
-          .padStart(4, "0")
-      );
+      strs.push(tmp.join(""));
       tmp = [];
     }
   });
@@ -34,31 +29,36 @@ const to2ByteStrings = (ins: Uint8Array) => {
   return strs;
 };
 
-// test("compiles IBM logo source", () => {
-//   const a = new Assembler(source);
+test("compiles IBM logo source", () => {
+  const a = new Assembler(source);
 
-//   let out = new Uint8Array(0);
+  let out = new Uint8Array(0);
 
-//   expect(() => {
-//     out = a.getInstructions();
-//   }).not.toThrow();
+  expect(() => {
+    out = a.getInstructions();
+  }).not.toThrow();
 
-//   const romHex = to2ByteStrings(rom);
-//   const instrHex = to2ByteStrings(out);
-//   const sourceLines = source
-//     .split("\n")
-//     .filter((l) => !l.includes(":"))
-//     .map((l) => l.trim());
+  const romHex = to2ByteStrings(rom);
 
-//   for (let i = 0; i < romHex.length; i++) {
-//     expect(() => matchBin(romHex[i], instrHex[i], i + 1, sourceLines[i])).not.toThrow();
-//   }
-// });
+  const instrHex = to2ByteStrings(out);
+  const sourceLines = source
+    .split("\n")
+    .filter((l) => !l.includes(":"))
+    .map((l) => l.trim())
+    .filter((l) => l !== "");
 
-const u8a = (a) => new Uint8Array(a);
+  for (let i = 0; i < romHex.length; i++) {
+    expect(() => matchBin(romHex[i], instrHex[i], i + 1, sourceLines[i])).not.toThrow();
+  }
+
+  for (let i = 0; i < out.length; i++) {
+    expect(rom[i]).toBe(out[i]);
+  }
+});
+
 const td = (i: string, o: number) => ({ input: i, output: o });
 
-const basicInstructionsTestData2 = [
+const instructionsTestData = [
   // 00E0 - CLS
   td("CLS", 0x00e0),
   // 00EE - RET
@@ -70,6 +70,7 @@ const basicInstructionsTestData2 = [
   td("JP 0xf0", 0x10f0),
   td("JP 0x0f", 0x100f),
   td("JP 0x0", 0x1000),
+  td("JP 0x1", 0x1001),
   // 2nnn - CALL addr
   td("CALL 0xfff", 0x2fff),
   td("CALL 0xf0f", 0x2f0f),
@@ -100,6 +101,7 @@ const basicInstructionsTestData2 = [
   td("SE VA, VA", 0x5aa0),
   td("SE Vf, Vf", 0x5ff0),
   // 6xkk - LD Vx, byte
+  td("LD V0, 0x0", 0x6000),
   td("LD V0, 0x1", 0x6001),
   td("LD V1, 0x1", 0x6101),
   td("LD VA, 0x1", 0x6a01),
@@ -303,7 +305,7 @@ const basicInstructionsTestData2 = [
 
 const ths = (n: number, p: number = 0) => n.toString(16).padStart(p, "0");
 
-basicInstructionsTestData2.forEach((t) => {
+instructionsTestData.forEach((t) => {
   test("assembles instruction " + t.input, () => {
     const a = new Assembler(t.input);
 
@@ -319,4 +321,88 @@ basicInstructionsTestData2.forEach((t) => {
     const outHex = `0x${ths(t.output, 4)}`;
     expect(instructionHex).toBe(outHex);
   });
+});
+
+test("compiles label 1", () => {
+  const s = `
+start:
+  JP start
+  `;
+
+  const a = new Assembler(s);
+
+  let out = new Uint8Array(0);
+
+  expect(() => {
+    out = a.getInstructions();
+  }).not.toThrow();
+
+  const outHex = to2ByteStrings(out);
+  expect(outHex[0]).toBe("1200");
+});
+
+test("compiles label 2", () => {
+  const s = `
+start:
+  JP another_label
+
+another_label:
+  JP start
+  `;
+
+  const a = new Assembler(s);
+
+  let out = new Uint8Array(0);
+
+  expect(() => {
+    out = a.getInstructions();
+  }).not.toThrow();
+
+  const outHex = to2ByteStrings(out);
+  expect(outHex[0]).toBe("1202");
+  expect(outHex[1]).toBe("1200");
+});
+
+test("compiles label 3", () => {
+  const s = `
+start:
+  JP another_label
+
+another_label:
+  JP another_label
+  `;
+
+  const a = new Assembler(s);
+
+  let out = new Uint8Array(0);
+
+  expect(() => {
+    out = a.getInstructions();
+  }).not.toThrow();
+
+  const outHex = to2ByteStrings(out);
+  expect(outHex[0]).toBe("1202");
+  expect(outHex[1]).toBe("1202");
+});
+
+test("compiles direct byte", () => {
+  const s = `
+  DB 0x00
+  DB 0x11
+  DB 0xaa
+  DB 0xff
+  `;
+
+  const a = new Assembler(s);
+
+  let out = new Uint8Array(0);
+
+  expect(() => {
+    out = a.getInstructions();
+  }).not.toThrow();
+
+  expect(out[0]).toBe(0x00);
+  expect(out[1]).toBe(0x11);
+  expect(out[2]).toBe(0xaa);
+  expect(out[3]).toBe(0xff);
 });

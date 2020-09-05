@@ -2,27 +2,15 @@
 
 import RomLoader from "./RomLoader.js";
 import VM from "../vm/VM.js";
+// import Assembler from "../build/Assembler.js";
 
-// const main = async () => {
-//   const romLoader = new RomLoader();
-//   const rom = await romLoader.load("/roms/IBM Logo.ch8");
+const main = async () => {
+  const romLoader = new RomLoader();
+  const rom = await romLoader.load("/c8games/INVADERS");
 
-//   //   const source = `
-//   // start:
-//   //     ADD V0, 0x2
-//   //     LD I, 0x0
-//   //     DRW V0, V1, 0x5
-//   //     JP start
-//   //     `;
+  const vm = new VM();
+  vm.loadRom(rom);
+  vm.start();
+};
 
-//   //   const assembler = new Assembler(source);
-//   //   const instructions = assembler.getInstructions();
-
-//   //   console.log(instructions);
-
-//   const vm = new VM(true);
-//   vm.loadRom(rom);
-//   // vm.start();
-// };
-
-// main();
+main();
