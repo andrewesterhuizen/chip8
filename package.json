@@ -1,0 +1,28 @@
+{
+  "name": "chip8",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "webpack": "webpack",
+    "webpack-dev-server": "webpack-dev-server --mode=development",
+    "dev": "npm run webpack-dev-server",
+    "start": "npm run dev",
+    "build": "npm run webpack -- --env.mode production",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-loader": "6.2.2",
+    "typescript": "^4.0.2",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "3.11.0"
+  },
+  "dependencies": {
+    "html-webpack-plugin": "^4.3.0",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.3.0"
+  }
+}
