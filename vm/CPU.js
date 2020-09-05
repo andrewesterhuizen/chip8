@@ -90,7 +90,9 @@ export default class CPU {
 
     infoEl.innerHTML += "<br>";
 
-    infoEl.innerHTML += "key: " + this.keyboard.keyPressed;
+    const keyIndex = this.keyboard.keys.indexOf(this.keyboard.keyPressed);
+    const keyString = keyIndex.toString(16)[0];
+    infoEl.innerHTML += "key: " + keyString + " | " + this.keyboard.keyPressed;
   }
 
   start() {
