@@ -100,7 +100,7 @@ export default class CPU {
 
   tick() {
     this.execute(this.fetchNextInstruction());
-    this.renderInfo();
+    // this.renderInfo();
   }
 
   execute(instruction) {
