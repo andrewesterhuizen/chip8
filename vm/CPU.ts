@@ -124,6 +124,7 @@ export default class CPU {
             // The interpreter sets the program counter to the address at the top of the stack, then subtracts 1 from the stack pointer.
             this.pc = this.stack[this.sp];
             this.sp--;
+            break;
           }
         }
 

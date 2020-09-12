@@ -58,8 +58,17 @@ export default class Assembler {
       }
 
       case "CALL": {
-        const [c, b, a] = argA.getNibbles();
-        return n4(0x2, c, b, a);
+        if (argA.isNumber()) {
+          const [c, b, a] = argA.getNibbles();
+          return n4(0x2, c, b, a);
+        } else {
+          const address = this.labels[argA.rawArg()];
+          if (typeof address === "undefined") {
+            throw new Error(`label ${argA.rawArg()} could not be found`);
+          }
+          const addressHex = address.toString(16).padStart(3, "0");
+          return n4(0x2, parseInt(addressHex[0], 16), parseInt(addressHex[1], 16), parseInt(addressHex[2], 16));
+        }
       }
 
       case "SE": {

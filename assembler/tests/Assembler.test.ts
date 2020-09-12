@@ -4,6 +4,8 @@ const fs = require("fs");
 const source = fs.readFileSync("./assembler/tests/IBM Logo.asm", { encoding: "utf8" });
 const rom = fs.readFileSync("./assembler/tests/IBM Logo.ch8");
 
+const ths = (n: number, p: number = 0) => n.toString(16).padStart(p, "0");
+
 const matchBin = (a: any, b: any, ln: number, l: string) => {
   if (a !== b) {
     throw new Error(`
@@ -303,8 +305,6 @@ const instructionsTestData = [
   td("LD VF, [I]", 0xff65),
 ];
 
-const ths = (n: number, p: number = 0) => n.toString(16).padStart(p, "0");
-
 instructionsTestData.forEach((t) => {
   test("assembles instruction " + t.input, () => {
     const a = new Assembler(t.input);
@@ -405,4 +405,31 @@ test("compiles direct byte", () => {
   expect(out[1]).toBe(0x11);
   expect(out[2]).toBe(0xaa);
   expect(out[3]).toBe(0xff);
+});
+
+test("compiles label and call", () => {
+  const s = `
+start:
+  CALL subr
+  
+subr:
+  LD V0, 0x10
+  RET
+  `;
+
+  const a = new Assembler(s);
+
+  let out = new Uint8Array(0);
+
+  expect(() => {
+    out = a.getInstructions();
+  }).not.toThrow();
+
+  const outHex = to2ByteStrings(out);
+
+  console.log(a.labels);
+
+  expect(outHex[0]).toBe("2202"); // 2nnn - CALL addr
+  expect(outHex[1]).toBe("6010"); // 6xkk - LD Vx, byte
+  expect(outHex[2]).toBe("00ee"); // RET
 });
