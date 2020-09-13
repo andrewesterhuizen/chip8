@@ -4,8 +4,6 @@ import Keyboard from "./peripherals/Keyboard.js";
 import Sound from "./peripherals/Sound.js";
 import Screen from "./peripherals/Screen.js";
 
-const infoEl = document.querySelector("#info");
-
 export default class CPU {
   ram = new Uint8Array(4096);
   stack = new Uint16Array(16);
@@ -58,38 +56,6 @@ export default class CPU {
     for (let i = 0; i < program.length; i++) {
       this.ram[0x200 + i] = program[i];
     }
-  }
-
-  renderInfo() {
-    infoEl.innerHTML = "";
-    infoEl.innerHTML += `${this.registers.reduce((p, r, i) => {
-      p += `V${i.toString(16).toUpperCase()}|`;
-      return p;
-    }, "|")}`;
-
-    infoEl.innerHTML += " I  |";
-    infoEl.innerHTML += "PC |";
-    infoEl.innerHTML += "SP|";
-    infoEl.innerHTML += "DT|";
-    infoEl.innerHTML += "ST|";
-    infoEl.innerHTML += "<br>";
-
-    infoEl.innerHTML += `${this.registers.reduce((p, r, i) => {
-      p += `${r.toString(16).padStart(2, "0")}|`;
-      return p;
-    }, "|")}`;
-
-    infoEl.innerHTML += `${this.iRegister.toString(16).padStart(3, "0")}|`;
-    infoEl.innerHTML += `${this.pc.toString(16).padStart(3, "0")}|`;
-    infoEl.innerHTML += `${this.sp.toString(16).padStart(2, "0")}|`;
-    infoEl.innerHTML += `${this.delayTimer.toString(16).padStart(2, "0")}|`;
-    infoEl.innerHTML += `${this.soundTimer.toString(16).padStart(2, "0")}|`;
-
-    infoEl.innerHTML += "<br>";
-
-    const keyNumber = this.keyboard.getKeyNumber();
-    const keyString = keyNumber ? keyNumber.toString(16)[0] : "-";
-    infoEl.innerHTML += "key: " + keyString + " | " + this.keyboard.keyPressed;
   }
 
   fetchNextInstruction() {
