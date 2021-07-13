@@ -1,0 +1,3 @@
+A Chip-8 Emulator written in TypeScript that runs in the browser
+
+Chip-8 technical reference: http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
