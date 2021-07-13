@@ -1,4 +1,4 @@
-import VM from "/lib/VM.js";
+import VM from "./lib/VM.js";
 
 const loadRom = async (url) => {
   const request = await fetch(url);
@@ -6,7 +6,7 @@ const loadRom = async (url) => {
   return new Uint8Array(buffer);
 };
 
-const rom = await loadRom("/c8games/PONG");
+const rom = await loadRom("./c8games/PONG");
 const vm = new VM();
 vm.loadRom(rom);
 vm.start(1 / 60);
